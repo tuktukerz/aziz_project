@@ -31,10 +31,25 @@
                 <div class="space-y-2">
                   <label for="name" class="text-gray-600 dark:text-gray-300">Name</label>
                   <input
-                    type="name"
+                    type="text"
                     name="name"
                     id="name"
                     autocomplete="name"
+                    class="focus:outline-none block w-full rounded-md border border-gray-200 dark:border-gray-600 bg-transparent px-4 py-3 text-gray-600 transition duration-300 invalid:ring-2 invalid:ring-red-400 focus:ring-2 focus:ring-cyan-300"
+                    required
+                    />
+                    <?php if (isset($_GET['error']) && $_GET['error'] == 'empty_name'): ?>
+                      <p class="text-sm text-red-500">Name tidak boleh kosong</p>
+                    <?php endif; ?>
+                </div>
+
+                <div class="space-y-2">
+                  <label for="no_telp" class="text-gray-600 dark:text-gray-300">No Telpn</label>
+                  <input
+                    type="text"
+                    name="no_telpn"
+                    id="no_telpn"
+                    autocomplete="no_telp"
                     class="focus:outline-none block w-full rounded-md border border-gray-200 dark:border-gray-600 bg-transparent px-4 py-3 text-gray-600 transition duration-300 invalid:ring-2 invalid:ring-red-400 focus:ring-2 focus:ring-cyan-300"
                     required
                     />

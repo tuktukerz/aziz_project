@@ -4,40 +4,34 @@
     session_start();
  
 
-    if(isset($_POST['submit'])) {
-      // Check if code is provided
-      if(empty($_POST['code'])) {
-        $error = "Kode tidak boleh kosong";
-      } else {
-        $code = $_POST['code'];
+    if (isset($_POST['submit'])) {
+        // Ambil nomor telepon dari parameter
+        $no_telpn = $_GET["no_telpn"];
     
-        $sql = "SELECT * FROM users WHERE code='$code'";
-        $result = mysqli_query($conn, $sql);
-        
-        if ($result && mysqli_num_rows($result) > 0) {
-          $row = mysqli_fetch_assoc($result);
-          
-          // check if akun Not verified
-          $isVerified = $row['is_active'];
-          if ($isVerified == 0) {
-            $error = "Akun Belum Di Aktivasi";
-          } else {
-            // Check if code has expired
-            $expired_code = $row['expired_code'];
-            if (strtotime($expired_code) < strtotime('today')) {
-              $error = "Kode telah kadaluarsa";
-            } else {
-              $_SESSION['name'] = $row['name'];
-              $_SESSION['email'] = $row['email'];
-              $_SESSION['code'] = $row['code'];
-              header("Location: index.php");
-              exit(); // terminate the script execution after redirecting
-            }
-          }
+        // Cek apakah kode OTP disediakan
+        if (empty($_POST['otp'])) {
+            $error = "Kode OTP tidak boleh kosong";
         } else {
-          $error = "Kode salah, silahkan login kembali!";
-        } 
-      } 
+            $otp = $_POST['otp'];
+    
+            // Query untuk mencari user dengan nomor telepon dan kode OTP yang sesuai
+            $sql = "SELECT * FROM users WHERE otp='$otp' AND no_telpn='$no_telpn'";
+            $result = mysqli_query($conn, $sql);
+    
+            if ($result->num_rows > 0) {
+                // Jika user ditemukan, ubah nilai is_active menjadi 1
+                $row = mysqli_fetch_assoc($result);
+                $sql_update = "UPDATE users SET is_active=1 WHERE id={$row['id']}";
+                if ($conn->query($sql_update) === false) {
+                    die("Error: " . $sql_update . "<br>" . $conn->error);
+                }
+                // Tampilkan pesan sukses
+                $success = "Akun berhasil diaktifkan!";
+            } else {
+                // Jika user tidak ditemukan, tampilkan pesan error
+                $error = "Kode OTP salah atau nomor telepon tidak sesuai!";
+            }
+        }
     }
 ?>
 
@@ -47,7 +41,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="https://cdn.tailwindcss.com"></script>
-        <title>Login Account</title>
+        <title>Verification Account</title>
     </head>
 <body>
   
@@ -57,7 +51,15 @@
       <img src="image/logo.png" loading="lazy" class="ml-4 w-36" alt="tailus logo" />
       <div class="rounded-3xl border border-gray-100 bg-white dark:bg-gray-800 dark:border-gray-700 shadow-2xl shadow-gray-600/10 backdrop-blur-2xl">
         <div class="p-8 py-12 sm:p-16">
-          <h2 class="mb-8 text-2xl font-bold text-gray-800 dark:text-white">Login account</h2>
+          <h2 class="mb-8 text-2xl font-bold text-gray-800 dark:text-white">Activation account</h2>
+            <?php if (!empty($success)) { ?>
+              <div class="flex bg-green-100 rounded-lg p-4 mb-4 text-sm text-green-700" role="alert">
+                <svg class="w-5 h-5 inline mr-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                  <div>
+                    <span class="font-medium"><?= $success ?></span> 
+                  </div>
+              </div>
+            <?php } ?>
             <?php if (!empty($error)) { ?>
               <div class="flex bg-red-100 rounded-lg p-4 mb-4 text-sm text-red-700" role="alert">
                 <svg class="w-5 h-5 inline mr-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
@@ -68,11 +70,11 @@
             <?php } ?>
             <form action="" method="POST" class="space-y-8">        
               <div class="space-y-2">
-                <label for="username" class="text-gray-600 dark:text-gray-300">Code</label>
+                <label for="otp" class="text-gray-600 dark:text-gray-300">Kode OTP</label>
                 <input
-                  type="code"
-                  name="code"
-                  id="code"
+                  type="text"
+                  name="otp"
+                  id="otp"
                   autocomplete="code"
                   class="focus:outline-none block w-full rounded-md border border-gray-200 dark:border-gray-600 bg-transparent px-4 py-3 text-gray-600 transition duration-300 invalid:ring-2 invalid:ring-red-400 focus:ring-2 focus:ring-cyan-300"
                   required
@@ -80,7 +82,7 @@
               </div>
               <button name="submit"
               class="w-full rounded-md bg-sky-500 dark:bg-sky-400 h-11 flex items-center justify-center px-6 py-3 transition hover:bg-sky-600 focus:bg-sky-600 active:bg-sky-800">
-                  <span class="text-base font-semibold text-white dark:text-gray-900">Login</span>
+                  <span class="text-base font-semibold text-white dark:text-gray-900">Aktivasi</span>
               </button>
 
               <p class="border-t border-gray-100 dark:border-gray-700 pt-6 text-sm text-gray-500 dark:text-gray-400">
